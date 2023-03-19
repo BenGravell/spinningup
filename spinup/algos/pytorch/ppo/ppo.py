@@ -84,14 +84,12 @@ class PPOBuffer:
         return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in data.items()}
 
 
-
 def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0, 
         steps_per_epoch=4000, epochs=50, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,
         vf_lr=1e-3, train_pi_iters=80, train_v_iters=80, lam=0.97, max_ep_len=1000,
         target_kl=0.01, logger_kwargs=dict(), save_freq=10):
     """
-    Proximal Policy Optimization (by clipping), 
-
+    Proximal Policy Optimization (by clipping),
     with early stopping based on approximate KL
 
     Args:
@@ -199,15 +197,16 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
     logger = EpochLogger(**logger_kwargs)
     logger.save_config(locals())
 
-    # Random seed
-    seed += 10000 * proc_id()
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
     # Instantiate environment
     env = env_fn()
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape
+
+    # Random seed
+    seed += 10000*proc_id()
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    env.seed(seed)
 
     # Create actor-critic module
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
@@ -353,6 +352,7 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         logger.log_tabular('Time', time.time()-start_time)
         logger.dump_tabular()
 
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -372,7 +372,7 @@ if __name__ == '__main__':
     from spinup.utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
-    ppo(lambda : gym.make(args.env), actor_critic=core.MLPActorCritic,
+    ppo(lambda: gym.make(args.env), actor_critic=core.MLPActorCritic,
         ac_kwargs=dict(hidden_sizes=[args.hid]*args.l), gamma=args.gamma, 
         seed=args.seed, steps_per_epoch=args.steps, epochs=args.epochs,
         logger_kwargs=logger_kwargs)

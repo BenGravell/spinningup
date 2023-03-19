@@ -58,6 +58,7 @@ def plot_data(data, xaxis='Epoch', value="AverageEpRet", condition="Condition1",
 
     plt.tight_layout(pad=0.5)
 
+
 def get_datasets(logdir, condition=None):
     """
     Recursively look through logdir for output files produced by
@@ -115,10 +116,15 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
             logdirs += [logdir]
         else:
             basedir = osp.dirname(logdir)
-            fulldir = lambda x : osp.join(basedir, x)
+            fulldir = lambda x: osp.join(basedir, x)
             prefix = logdir.split(os.sep)[-1]
-            listdir= os.listdir(basedir)
+            listdir = os.listdir(basedir)
+            print(basedir)
+            print(fulldir)
+            print(prefix)
+            print(listdir)
             logdirs += sorted([fulldir(x) for x in listdir if prefix in x])
+            # logdirs += sorted([fulldir(x) for x in listdir])
 
     """
     Enforce selection rules, which check logdirs for certain substrings.
@@ -228,6 +234,7 @@ def main():
     make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count, 
                smooth=args.smooth, select=args.select, exclude=args.exclude,
                estimator=args.est)
+
 
 if __name__ == "__main__":
     main()

@@ -4,6 +4,7 @@ from gym.spaces import Box, Discrete
 
 import torch
 import torch.nn as nn
+from torch.nn.utils import parameters_to_vector
 from torch.distributions.normal import Normal
 from torch.distributions.categorical import Categorical
 
@@ -30,18 +31,28 @@ def discount_cumsum(x, discount):
     """
     magic from rllab for computing discounted cumulative sums of vectors.
 
-    input: 
-        vector x, 
-        [x0, 
-         x1, 
+    input:
+        vector x,
+        [x0,
+         x1,
          x2]
 
     output:
-        [x0 + discount * x1 + discount^2 * x2,  
+        [x0 + discount * x1 + discount^2 * x2,
          x1 + discount * x2,
          x2]
     """
     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
+
+
+def flat_grad(f, param, **kwargs):
+    return parameters_to_vector(torch.autograd.grad(f, param, **kwargs))
+
+
+def hessian_vector_product(f, policy, x):
+    # for H = grad**2 f, compute Hx
+    g = flat_grad(f, policy.parameters(), create_graph=True)
+    return flat_grad((g * x.detach()).sum(), policy.parameters(), retain_graph=True)
 
 
 class Actor(nn.Module):
@@ -52,7 +63,7 @@ class Actor(nn.Module):
         raise NotImplementedError
 
     def forward(self, obs, act=None):
-        # Produce action distributions for given observations, and 
+        # Produce action distributions for given observations, and
         # optionally compute the log likelihood of given actions under
         # those distributions.
         pi = self._distribution(obs)

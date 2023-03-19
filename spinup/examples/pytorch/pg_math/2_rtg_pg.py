@@ -6,24 +6,26 @@ import numpy as np
 import gym
 from gym.spaces import Discrete, Box
 
+
 def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
     # Build a feedforward neural network.
     layers = []
-    for j in range(len(sizes)-1):
-        act = activation if j < len(sizes)-2 else output_activation
-        layers += [nn.Linear(sizes[j], sizes[j+1]), act()]
+    for j in range(len(sizes) - 1):
+        act = activation if j < len(sizes) - 2 else output_activation
+        layers += [nn.Linear(sizes[j], sizes[j + 1]), act()]
     return nn.Sequential(*layers)
+
 
 def reward_to_go(rews):
     n = len(rews)
     rtgs = np.zeros_like(rews)
     for i in reversed(range(n)):
-        rtgs[i] = rews[i] + (rtgs[i+1] if i+1 < n else 0)
+        rtgs[i] = rews[i] + (rtgs[i + 1] if i + 1 < n else 0)
     return rtgs
 
-def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2, 
-          epochs=50, batch_size=5000, render=False):
 
+def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
+          epochs=50, batch_size=5000, render=False):
     # make environment, check spaces, get obs / act dims
     env = gym.make(env_name)
     assert isinstance(env.observation_space, Box), \
@@ -35,7 +37,7 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     n_acts = env.action_space.n
 
     # make core of policy network
-    logits_net = mlp(sizes=[obs_dim]+hidden_sizes+[n_acts])
+    logits_net = mlp(sizes=[obs_dim] + hidden_sizes + [n_acts])
 
     # make function to compute action distribution
     def get_policy(obs):
@@ -49,7 +51,7 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     # make loss function whose gradient, for the right data, is policy gradient
     def compute_loss(obs, act, weights):
         logp = get_policy(obs).log_prob(act)
-        return -(logp * weights).mean()
+        return -(logp*weights).mean()
 
     # make optimizer
     optimizer = Adam(logits_net.parameters(), lr=lr)
@@ -57,16 +59,16 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     # for training policy
     def train_one_epoch():
         # make some empty lists for logging.
-        batch_obs = []          # for observations
-        batch_acts = []         # for actions
-        batch_weights = []      # for reward-to-go weighting in policy gradient
-        batch_rets = []         # for measuring episode returns
-        batch_lens = []         # for measuring episode lengths
+        batch_obs = []  # for observations
+        batch_acts = []  # for actions
+        batch_weights = []  # for reward-to-go weighting in policy gradient
+        batch_rets = []  # for measuring episode returns
+        batch_lens = []  # for measuring episode lengths
 
         # reset episode-specific variables
-        obs = env.reset()       # first obs comes from starting distribution
-        done = False            # signal from environment that episode is over
-        ep_rews = []            # list for rewards accrued throughout ep
+        obs = env.reset()  # first obs comes from starting distribution
+        done = False  # signal from environment that episode is over
+        ep_rews = []  # list for rewards accrued throughout ep
 
         # render first episode of each epoch
         finished_rendering_this_epoch = False
@@ -122,10 +124,12 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
     for i in range(epochs):
         batch_loss, batch_rets, batch_lens = train_one_epoch()
         print('epoch: %3d \t loss: %.3f \t return: %.3f \t ep_len: %.3f'%
-                (i, batch_loss, np.mean(batch_rets), np.mean(batch_lens)))
+              (i, batch_loss, np.mean(batch_rets), np.mean(batch_lens)))
+
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', '--env', type=str, default='CartPole-v0')
     parser.add_argument('--render', action='store_true')

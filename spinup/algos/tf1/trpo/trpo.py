@@ -88,7 +88,6 @@ class GAEBuffer:
                 self.logp_buf] + core.values_as_sorted_list(self.info_bufs)
 
 
-
 def trpo(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0, 
          steps_per_epoch=4000, epochs=50, gamma=0.99, delta=0.01, vf_lr=1e-3,
          train_v_iters=80, damping_coeff=0.1, cg_iters=10, backtrack_iters=10, 
@@ -230,7 +229,7 @@ def trpo(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     # Count variables
     var_counts = tuple(core.count_vars(scope) for scope in ['pi', 'v'])
-    logger.log('\nNumber of parameters: \t pi: %d, \t v: %d\n'%var_counts)
+    logger.log('\nNumber of parameters: \t pi: %d, \t v: %d\n' % var_counts)
 
     # TRPO losses
     ratio = tf.exp(logp - logp_old_ph)          # pi(a|s) / pi_old(a|s)
@@ -266,15 +265,15 @@ def trpo(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         (see https://en.wikipedia.org/wiki/Conjugate_gradient_method)
         """
         x = np.zeros_like(b)
-        r = b.copy() # Note: should be 'b - Ax(x)', but for x=0, Ax(x)=0. Change if doing warm start.
+        r = b.copy()  # Note: should be 'b - Ax(x)', but for x=0, Ax(x)=0. Change if doing warm start.
         p = r.copy()
-        r_dot_old = np.dot(r,r)
+        r_dot_old = np.dot(r, r)
         for _ in range(cg_iters):
             z = Ax(p)
             alpha = r_dot_old / (np.dot(p, z) + EPS)
             x += alpha * p
             r -= alpha * z
-            r_dot_new = np.dot(r,r)
+            r_dot_new = np.dot(r, r)
             p = r + (r_dot_new / r_dot_old) * p
             r_dot_old = r_dot_new
         return x
@@ -297,7 +296,7 @@ def trpo(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
         if algo=='npg':
             # npg has no backtracking or hard kl constraint enforcement
-            kl, pi_l_new = set_and_eval(step=1.)
+            kl, pi_l_new = set_and_eval(step=1.0)
 
         elif algo=='trpo':
             # trpo augments npg with backtracking line search, hard kl
@@ -377,6 +376,7 @@ def trpo(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             logger.log_tabular('BacktrackIters', average_only=True)
         logger.log_tabular('Time', time.time()-start_time)
         logger.dump_tabular()
+
 
 if __name__ == '__main__':
     import argparse
